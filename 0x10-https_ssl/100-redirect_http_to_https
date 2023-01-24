@@ -1,0 +1,11 @@
+global
+    # other global settings
+    redirect scheme https code 301 if !{ ssl_fc }
+
+frontend http-in
+    bind *:80
+    redirect prefix https://%[req.hdr(host)]%[url]
+
+frontend https-in
+    bind *:443 ssl crt /path/to/ssl/certificate.pem
+    # other https-in settings
