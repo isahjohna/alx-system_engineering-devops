@@ -6,9 +6,9 @@ then
 	echo "$f_name file exits"
 	if [ -s "$f_name" ]
 	then
-		echo "$f_name file is empty"
-	else
 		echo "$f_name file is not empty"
+	else
+		echo "$f_name file is empty"
 	fi
 	if [ -f "$f_name" ]
 	then
