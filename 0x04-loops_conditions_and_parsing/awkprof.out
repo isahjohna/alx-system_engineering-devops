@@ -1,0 +1,8 @@
+	# gawk profile, created Mon Jul 31 00:11:14 2023
+
+	# Rule(s)
+
+  3459  {
+  3459  	printf "%s %s\n", $1, $9
+	}
+
