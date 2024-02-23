@@ -31,4 +31,3 @@ if __name__ == '__main__':
         users_data['{}'.format(id)] = user_data
     with open('todo_all_employees.json', 'w') as file:
         json.dump(users_data, file)
-

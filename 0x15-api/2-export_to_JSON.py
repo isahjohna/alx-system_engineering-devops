@@ -35,4 +35,3 @@ if __name__ == '__main__':
                     "{}".format(id): user_data
                 }
                 json.dump(user_data, json_file)
-
