@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 # script that connects to sever 100.26.252.189
 
 ssh -i ~/.ssh/school ubuntu@100.26.252.189
