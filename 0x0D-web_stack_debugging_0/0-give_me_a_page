@@ -1,2 +1,14 @@
 #!/usr/bin/env bash
-sudo service apache2 start
+# This script installs Apache, updates the default web page, and starts the Apache service
+
+# Update the package list
+apt-get update
+
+# Install Apache
+apt-get install -y apache2
+
+# Write "Hello Holberton" to the default web page
+echo 'Hello Holberton' > /var/www/html/index.html
+
+# Start the Apache service
+service apache2 start
