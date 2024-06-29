@@ -1,4 +1,4 @@
-i#!/usr/bin/env bash
+#!/usr/bin/env bash
 # Installs, configures, and starts the load balancer
 sudo apt-get update
 sudo apt-get -y install --no-install-recommends software-properties-common
