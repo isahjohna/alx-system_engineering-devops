@@ -1,55 +1,58 @@
 #!/usr/bin/env bash
-# Installs, configures, and starts the load balancer
+# This script installs and configures HAProxy as a load balancer on a new Ubuntu machine
+
+# Update the package list and install HAProxy
 sudo apt-get update
-sudo apt-get -y install --no-install-recommends software-properties-common
-sudo add-apt-repository -y ppa:vbernat/haproxy-2.4
 sudo apt-get -y install haproxy
 
-# the load balancer's configuration
-DOMAIN_NAME='beta-scribbles.tech'
-INIT_FILE='/etc/default/haproxy'
-CONFIG_FILE='/etc/haproxy/haproxy.cfg'
-HAPROXY_LB_CONFIG=\
-"
-#--$DOMAIN_NAME-params-begin--
-backend $DOMAIN_NAME-backend
-	balance roundrobin
-	server 9317069-web-01 100.26.252.189:80 check
-	server 99317069-web-02 100.26.232.86:80 check
-frontend $DOMAIN_NAME-frontend
-	bind *:80
-	mode http
-	default_backend $DOMAIN_NAME-backend
-#--$DOMAIN_NAME-params-end--
-"
+# Define the HAProxy configuration
+HAPROXY_CONFIG="/etc/haproxy/haproxy.cfg"
 
-[ -f "$INIT_FILE" ] || touch "$INIT_FILE"
-[ -f "$CONFIG_FILE" ] || touch "$CONFIG_FILE"
+# Create the HAProxy configuration
+sudo tee "$HAPROXY_CONFIG" > /dev/null << EOL
+global
+    log /dev/log    local0
+    log /dev/log    local1 notice
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
+    stats timeout 30s
+    user haproxy
+    group haproxy
+    daemon
 
-CONFIG_WORDS=$(grep -Eco "$DOMAIN_NAME-backend" < $CONFIG_FILE)
+    ca-base /etc/ssl/certs
+    crt-base /etc/ssl/private
+    ssl-default-bind-ciphers PROFILE=SYSTEM
+    ssl-default-bind-options no-sslv3
 
-if [ "$(grep -Eco '^ENABLED=[01]$' < $INIT_FILE)" -gt 0 ]; then
-	sed -i 's/^ENABLED=0$/ENABLED=1/' "$INIT_FILE"
-else
-	echo 'ENABLED=1' >> $INIT_FILE
-fi
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+    errorfile 400 /etc/haproxy/errors/400.http
+    errorfile 403 /etc/haproxy/errors/403.http
+    errorfile 408 /etc/haproxy/errors/408.http
+    errorfile 500 /etc/haproxy/errors/500.http
+    errorfile 502 /etc/haproxy/errors/502.http
+    errorfile 503 /etc/haproxy/errors/503.http
+    errorfile 504 /etc/haproxy/errors/504.http
 
-if [ "$CONFIG_WORDS" -eq 0 ]; then
-	echo -e "$HAPROXY_LB_CONFIG" >> $CONFIG_FILE
-else
-	start_tkn="#--$DOMAIN_NAME-params-begin--"
-	end_tkn="#--$DOMAIN_NAME-params-end--"
-	a=$(grep -onE "$start_tkn" < "$CONFIG_FILE" | cut -d : -f1)
-	b=$(grep -onE "$end_tkn" < "$CONFIG_FILE" | cut -d : -f1)
-	a=$((a - 1))
-	b=$((b + 1))
-	sed -i "$a,$b"d "$CONFIG_FILE"
-	echo -en "$HAPROXY_LB_CONFIG" >> $CONFIG_FILE
-fi
+frontend http_front
+    bind *:80
+    default_backend http_back
 
-if [ "$(pgrep -c haproxy)" -le 0 ]; then
-	service haproxy start
-else
-	service haproxy restart
-fi
+backend http_back
+    balance roundrobin
+    server 317069-web-01 100.26.252.189:80 check
+    server 317069-web-02 100.26.232.86:80 check
+EOL
 
+# Enable HAProxy to start at boot
+sudo systemctl enable haproxy
+
+# Start HAProxy
+sudo systemctl restart haproxy
