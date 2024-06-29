@@ -47,8 +47,8 @@ frontend http_front
 
 backend http_back
     balance roundrobin
-    server 317069-web-01 100.26.252.189:80 check
-    server 317069-web-02 100.26.232.86:80 check
+    server web-01 100.26.252.189:80 check
+    server web-02 100.26.232.86:80 check
 EOL
 
 # Enable HAProxy to start at boot
