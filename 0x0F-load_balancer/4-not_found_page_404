@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Customizing a 404-error page
+
+# Step 1: Update Packages and Install Nginx
+sudo apt-get update
+sudo apt-get install -y nginx
+
+# Step 2: Create a basic index.html page
+echo "Hello World!" | sudo tee /var/www/html/index.html
+
+# Step 3: Configure 301 redirect
+# Add redirect rule to Nginx default server block
+sudo sed -i '/server_name _;/a \    rewrite ^/redirect_me https://github.com/isahjohnitopa permanent;' /etc/nginx/sites-enabled/default
+
+# Step 4: Create a custom 404 error page
+echo "Ceci n'est pas une page" | sudo tee /var/www/html/404.html
+
+# Step 5: Configure Nginx to serve the custom 404 page
+# Insert error_page directive in the default server block
+sudo sed -i '/listen 80 default_server;/a \    error_page 404 /404.html;\n    location = /404.html {\n        root /var/www/html;\n        internal;\n    }' /etc/nginx/sites-enabled/default
+
+# Step 6: Test Nginx configuration for syntax errors
+sudo nginx -t
+
+# Step 7: Restart Nginx to apply changes
+sudo service nginx restart
