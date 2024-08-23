@@ -1,4 +1,3 @@
-sylvain@ubuntu:~$ cat answerfile
 #!/usr/bin/env bash
 # Fix my server with these magic 2 lines
 sudu service apache2 status
