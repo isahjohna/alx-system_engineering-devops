@@ -1,58 +1,32 @@
 #!/usr/bin/env bash
-# This script installs and configures HAProxy as a load balancer on a new Ubuntu machine
+# Create a script to install and configure HAProxy on lb-01 server
+# Configure HAProxy to send traffic to web-01 and web-02 servers
+# Distribute requests using a roundrobin algorithm
+# Make sure that HAProxy can be managed via an init script
 
-# Update the package list and install HAProxy
-sudo apt-get update
-sudo apt-get -y install haproxy
+# Install and configure HAproxy on my lb-01 server.
+sudo apt-get -y update
+apt-get -y install haproxy
 
-# Define the HAProxy configuration
-HAPROXY_CONFIG="/etc/haproxy/haproxy.cfg"
+# edit config file
+server_config=\
+"
+frontend  besthor_frontend
+        bind *:80
+        mode http
+        default_backend isah_backend
+backend isah_backend
+        balance roundrobin
+        server 317069-web-01 54.144.222.67:80 check
+        server 317069-web-02 3.84.239.71:80 check
+"
+echo "$server_config" | sudo tee -a /etc/haproxy/haproxy.cfg
 
-# Create the HAProxy configuration
-sudo tee "$HAPROXY_CONFIG" > /dev/null << EOL
-global
-    log /dev/log    local0
-    log /dev/log    local1 notice
-    chroot /var/lib/haproxy
-    stats socket /run/haproxy/admin.sock mode 660 level admin expose-fd listeners
-    stats timeout 30s
-    user haproxy
-    group haproxy
-    daemon
+# enable haproxy to be started by init script
+echo "ENABLED=1" | sudo tee -a /etc/default/haproxy
 
-    ca-base /etc/ssl/certs
-    crt-base /etc/ssl/private
-    ssl-default-bind-ciphers PROFILE=SYSTEM
-    ssl-default-bind-options no-sslv3
+# Testing the HAproxy configuration file
+sudo haproxy -c -f /etc/haproxy/haproxy.cfg
 
-defaults
-    log     global
-    mode    http
-    option  httplog
-    option  dontlognull
-    timeout connect 5000
-    timeout client  50000
-    timeout server  50000
-    errorfile 400 /etc/haproxy/errors/400.http
-    errorfile 403 /etc/haproxy/errors/403.http
-    errorfile 408 /etc/haproxy/errors/408.http
-    errorfile 500 /etc/haproxy/errors/500.http
-    errorfile 502 /etc/haproxy/errors/502.http
-    errorfile 503 /etc/haproxy/errors/503.http
-    errorfile 504 /etc/haproxy/errors/504.http
-
-frontend http_front
-    bind *:80
-    default_backend http_back
-
-backend http_back
-    balance roundrobin
-    server web-01 100.26.252.189:80 check
-    server web-02 100.26.232.86:80 check
-EOL
-
-# Enable HAProxy to start at boot
-sudo systemctl enable haproxy
-
-# Start HAProxy
-sudo systemctl restart haproxy
+# Restart the Nginx service
+sudo service haproxy restart
