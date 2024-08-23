@@ -1,25 +1,26 @@
 #!/usr/bin/env bash
-# Customizing a 404-error_page
+# Customizing a 404-error page
 
-# Updating Packages before performing installations
+# Step 1: Update Packages and Install Nginx
 sudo apt-get update
 sudo apt-get install -y nginx
 
-# Creating an index.html page
+# Step 2: Create a basic index.html page
 echo "Hello World!" | sudo tee /var/www/html/index.html
 
-# Performing a "moved permanently redirection" (301)
-new_string="server_name _;\n\trewrite ^\/redirect_me https:\/\/github.com\/isahjohnitopa permanent;Lwq"
-sudo sed -i "s/server_name _;/$new_string/" /etc/nginx/sites-enabled/default
+# Step 3: Configure 301 redirect
+# Add redirect rule to Nginx default server block
+sudo sed -i '/server_name _;/a \    rewrite ^/redirect_me https://github.com/isahjohnitopa permanent;' /etc/nginx/sites-enabled/default
 
-# Creating a 404 Custom error page
+# Step 4: Create a custom 404 error page
 echo "Ceci n'est pas une page" | sudo tee /var/www/html/404.html
-new_string="listen 80 default_server;\n\terror_page 404 \/404.html;\n\tlocation = \/404.html {\n\t\troot \/var\/www\/html;\n\t\tinternal;\n\t}"
 
-sudo sed -i "s/listen 80 default_server;/$new_string/" /etc/nginx/sites-enabled/default
+# Step 5: Configure Nginx to serve the custom 404 page
+# Insert error_page directive in the default server block
+sudo sed -i '/listen 80 default_server;/a \    error_page 404 /404.html;\n    location = /404.html {\n        root /var/www/html;\n        internal;\n    }' /etc/nginx/sites-enabled/default
 
-# Testing configurations for syntax errors
+# Step 6: Test Nginx configuration for syntax errors
 sudo nginx -t
 
-# restart nginx after implementing changes
+# Step 7: Restart Nginx to apply changes
 sudo service nginx restart
