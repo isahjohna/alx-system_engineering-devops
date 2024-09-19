@@ -1,18 +1,63 @@
-<img src=./image.png width=50%>
-
-# BooktifuL requests failure report
-Last week, it was reported that the BooktifuL platform was returning 500 Error on all requests made on the platform routes, all the services were down.  90% of the users were affected. The root cause was the failure of our master server web-01.
-
-## Timeline
-The error was realized on Saturday 26th February 1200 hours (East Africa Time) when our Site Reliability Engineer, Mr Elie saw the master server lagging in speed. Our engineers on call disconnected the master server web-01 for further system analysis and channelled all requests to client server web-02. They soled problem by Sunday 27th Febraury 2200 hours (East Africa Time).
-
-## Root cause and resolution
-The BooktifuL platform is served by 2 ubuntu cloud servers. The master server web-01 was connected to serve all requests, and it stopped functioning due to memory outage as a results of so many requests because during a previous test, the client server web-02 was disconnected temporarily for testing and was not connected to the load balancer afterwards. 
+#0x19-postmortem task using webstack debugging #1
+#By CryptoTechCoder [Visit Crypto Tech Coder YouTube channel](https://www.youtube.com/@cryptotechcoder)
 
 
-The issue was fixed when the master server was temporarily disconnected for memory clean-up then connected back to the loadbalancer and round-robin algorithm was configured so that both the master and client servers can handle equal amount of requests.
 
-## Measures against such problem in future
-- Choose the best loadbalancing algorithm for your programs
-- Always keep an eye on your servers to ensure they are running properly
-- Have extra back-up servers to prevent your program fro completely going offline during an issue
+![Technical Issue Resolution](./postmorterm_technical.webp)
+
+# Issue Summary
+Duration of the Outage: The outage started at 11:45 AM and was resolved by 12:45 PM West African Time.
+
+# Impact:
+The site was not listening on port 80, causing all users to be unable to access the website.
+
+# Root Cause:
+The Nginx server's site settings were not properly linked. Specifically, the sites-available configuration was not linked to sites-enabled, meaning the configuration was correct but not activated, preventing users from accessing the site.
+
+# Timeline
+11:45 AM: The issue was detected when ALX (the platform) attempted to access the website and found it unresponsive.
+
+11:50 AM: ALX monitoring alerts indicated that the site was down, and the issue was escalated to me.
+
+11:55 AM: Initial investigation focused on checking the Nginx configuration files for errors, but no errors were found in the configuration itself.
+
+12:15 PM: Further investigation led to checking which service was listening on port 80. It was then discovered that the Nginx configuration in sites-available was not linked to sites-enabled.
+
+12:30 PM: The default configuration was correctly linked in sites-enabled, and Nginx was restarted to apply the changes.
+
+12:45 PM: The issue was resolved, and the site was back online.
+
+# Root Cause and Resolution
+# Root Cause:
+The root cause was the failure to link the sites-available configuration to sites-enabled, meaning the Nginx server configuration was not active despite being correct.
+
+# Resolution:
+The issue was resolved by linking the default configuration from sites-available to sites-enabled and restarting the Nginx service.
+
+# Corrective and Preventative Measures
+
+# Improvements:
+Ensuring that after any configuration changes, a script or automated check is run to confirm that the necessary configurations are linked and active.
+Improve the monitoring system to detect such issues earlier.
+
+# Task List:
+
+Create and execute a script to link the sites-available configuration to sites-enabled after each configuration change.
+Add a monitoring check to ensure that Nginx is correctly listening on port 80.
+
+# Example Script
+Here is the script i mentioned to ensure the configuration is always active:
+
+______________________________________________________________
+[bash]
+(Copy code)
+#!/usr/bin/env bash
+# Ensure Nginx is properly configured and listening on port 80
+
+cat /etc/nginx/sites-available/default > /etc/nginx/sites-enabled/default
+sudo service nginx restart
+_______________________________________________________________
+
+# This script ensures that the correct configuration is enabled and restarts Nginx to apply the changes.
+the flow diagram
+![Nginx Configuration Flow](./postmoterm_flow_chart.webp)
